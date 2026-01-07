@@ -35,17 +35,25 @@
                     },
                     animation: {
                         'enter': 'enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'shimmer': 'shimmer 8s linear infinite',
                     },
                     keyframes: {
                         enter: {
                             '0%': { opacity: '0', transform: 'translateY(20px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '0% 50%' },
+                            '100%': { backgroundPosition: '200% 50%' },
                         }
                     }
                 }
             }
         }
     </script>
+    
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         body {
@@ -55,6 +63,7 @@
             background-color: #FAFAF9;
             color: #1A1918;
             -webkit-font-smoothing: antialiased;
+            padding-bottom: 140px; /* Space for nav */
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -66,180 +75,221 @@
             background-image: radial-gradient(circle at 50% 50%, #1a1a1a 1px, transparent 1px);
             background-size: 20px 20px;
         }
+        
+        /* View Switching Logic */
+        .view-section { display: none; opacity: 0; transition: opacity 0.4s ease; }
+        .view-section.active { display: block; opacity: 1; }
+        
+        /* Nav Transition */
+        #navbar { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        #navbar.hidden-nav { transform: translateY(200%); }
+
+        /* Loader Logic */
+        #loader { transition: opacity 0.5s ease; pointer-events: none;}
+        body.loaded #loader { opacity: 0; }
+        
+        /* Button Interaction Styles */
+        .btn-booking { position: relative; overflow: hidden; }
+        .btn-booking .loader, .btn-booking .check { 
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; 
+            opacity: 0; transition: opacity 0.2s; background: white;
+        }
+        .btn-booking.loading .loader { opacity: 1; }
+        .btn-booking.success .check { opacity: 1; background: #059669; color: white; }
+        .btn-booking.loading .time-text, .btn-booking.success .time-text { opacity: 0; }
     </style>
 </head>
-<body>
-    <!-- Fallback Loading State (Visible until Preact loads) -->
-    <div id="app">
-        <div class="fixed inset-0 flex items-center justify-center bg-[#FAFAF9]">
-            <div class="text-center">
-                <div class="w-8 h-8 border-2 border-stone-200 border-t-stone-800 rounded-full animate-spin mx-auto mb-4"></div>
-                <p class="text-xs font-serif text-stone-400 tracking-widest uppercase">Loading GlowUp...</p>
-            </div>
-        </div>
+<body class="overflow-x-hidden">
+
+    <!-- LOADER -->
+    <div id="loader" class="fixed inset-0 z-[100] bg-[#FAFAF9] flex flex-col items-center justify-center">
+        <div class="w-10 h-10 border-4 border-accent border-t-primary rounded-full animate-spin"></div>
+        <p class="mt-4 text-xs font-serif text-stone-400 tracking-widest uppercase">Loading...</p>
     </div>
 
-    <!-- MODULE SCRIPT (Modern Browsers + GitHub Pages) -->
-    <script type="module">
-        import { h, render } from 'https://esm.sh/preact@10.19.3';
-        import { useState, useEffect, useRef } from 'https://esm.sh/preact@10.19.3/hooks';
-        import htm from 'https://esm.sh/htm@3.1.1';
-
-        // Initialize HTM with Preact
-        const html = htm.bind(h);
-
-        // --- ICONS ---
-        // Manually defined to prevent loader/fetch errors
-        const Icons = {
-            Search: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
-            Calendar: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`,
-            User: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-            Menu: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>`,
-            X: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>`,
-            ChevronRight: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
-            ChevronLeft: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
-            Star: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-            Fire: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
-            CreditCard: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`,
-            Sparkles: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
-            Bell: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`,
-            Help: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>`,
-            MapPin: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
-            Trend: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
-            Heart: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`,
-            Loader: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`,
-            Check: (p) => html`<svg ...${p} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
-        };
-
-        // --- SUB-COMPONENTS ---
-
-        const Tag = ({ children, active }) => html`
-            <button class="px-5 py-2.5 text-[14px] font-medium rounded-full transition-all duration-300 active:scale-95 border whitespace-nowrap ${active ? 'bg-primary text-white border-primary shadow-soft' : 'bg-transparent text-secondary border-accent hover:border-secondary'}">
-                ${children}
+    <!-- HEADER -->
+    <header id="main-header" class="fixed top-0 w-full z-40 px-6 pt-16 pb-4 bg-[#FAFAF9]/95 backdrop-blur-md transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-4xl font-serif italic font-medium tracking-tight text-primary leading-none">GlowUp</h1>
+            <button id="menu-btn" onclick="toggleMenu()" class="p-2 rounded-full bg-white border border-accent shadow-sm active:scale-95 transition-transform">
+                <i data-lucide="menu" class="w-5 h-5 text-primary"></i>
             </button>
-        `;
+        </div>
+        
+        <div id="header-content" class="space-y-6 transition-all duration-500 overflow-hidden" style="max-height: 200px; opacity: 1;">
+            <div class="relative group">
+                <i data-lucide="search" class="absolute left-0 top-3 w-4 h-4 text-stone-300"></i>
+                <input type="text" placeholder="Search artists..." class="w-full bg-transparent border-b border-accent py-2.5 pl-7 pr-4 text-base font-serif text-primary placeholder:font-sans placeholder:text-stone-300 focus:outline-none focus:border-primary transition-colors" />
+            </div>
+            <div class="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 hide-scrollbar">
+                <button class="px-5 py-2.5 text-[14px] font-medium rounded-full border bg-primary text-white border-primary shadow-soft flex-shrink-0">All</button>
+                <button class="px-5 py-2.5 text-[14px] font-medium rounded-full border bg-transparent text-secondary border-accent flex-shrink-0">Hair</button>
+                <button class="px-5 py-2.5 text-[14px] font-medium rounded-full border bg-transparent text-secondary border-accent flex-shrink-0">Skin</button>
+                <button class="px-5 py-2.5 text-[14px] font-medium rounded-full border bg-transparent text-secondary border-accent flex-shrink-0">Nails</button>
+            </div>
+        </div>
+    </header>
 
-        const SalonCard = ({ salon, onBook, delay }) => {
-            const [bookingState, setBookingState] = useState(null); 
-            const [bookedTime, setBookedTime] = useState(null);
-            const times = ['2:00', '2:30', '4:15'];
-            const isHero = salon.id === 'salon_danielle';
+    <!-- CONTENT CONTAINER -->
+    <main class="w-full max-w-md mx-auto pt-[200px] px-6">
 
-            const handleBook = (time) => {
-                if (bookingState) return;
-                setBookingState('loading'); setBookedTime(time);
-                setTimeout(() => { setBookingState('success'); onBook({ salonName: salon.name, serviceName: salon.services[0].name, price: salon.services[0].price, time: time }); setTimeout(() => { setBookingState(null); setBookedTime(null); }, 800); }, 400); 
-            };
-
-            return html`
-                <article class="group relative flex flex-col gap-4 animate-enter" style=${{ animationDelay: delay + 'ms' }}>
-                    <div class="relative w-full overflow-hidden rounded-xl bg-stone-200 shadow-soft ${isHero ? 'aspect-[3/4]' : 'aspect-[16/9]'}">
-                        <img src=${salon.image} class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
-                        <div class="absolute top-4 left-4"><span class="px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold tracking-widest uppercase text-primary rounded-sm shadow-sm">${salon.featured ? 'Featured' : 'Popular'}</span></div>
-                        <div class="absolute bottom-4 right-4"><span class="flex items-center gap-1 px-2 py-1 bg-stone-900/80 backdrop-blur text-[11px] font-medium text-white rounded-full ${isHero ? 'border border-gold text-gold' : ''}"><${Icons.Star} className="w-3 h-3 ${isHero ? 'text-gold' : 'text-white'}" /> ${salon.rating}</span></div>
-                    </div>
-                    <div class="px-1 py-2">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="space-y-1">
-                                <h3 class="text-2xl font-serif text-primary leading-tight">${salon.name}</h3>
-                                <p class="text-base text-secondary font-medium">${salon.subtitle}</p>
-                            </div>
-                            <p class="text-base font-serif text-primary mt-1 font-medium">$${salon.services[0].price}</p>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-accent">
-                            <div class="flex items-center justify-between mb-4"><span class="text-[11px] font-bold tracking-widest uppercase text-secondary">Available Today</span></div>
-                            <div class="flex gap-3">
-                                ${times.map(time => {
-                                    const isLoading = bookingState === 'loading' && bookedTime === time;
-                                    const isSuccess = bookingState === 'success' && bookedTime === time;
-                                    return html`
-                                        <button key=${time} onClick=${() => handleBook(time)} disabled=${bookingState !== null} class="relative overflow-hidden flex-1 py-3 rounded-lg text-sm font-medium transition-all duration-300 border border-accent ${isSuccess ? 'bg-emerald-600 text-white border-emerald-600' : isLoading ? 'bg-primary text-white border-primary' : 'bg-white text-primary hover:border-secondary'} ${(bookingState !== null && !isLoading && !isSuccess) ? 'opacity-50' : ''}">
-                                            <span class="relative z-10 ${(isLoading || isSuccess) ? 'opacity-0' : 'opacity-100'}">${time}</span>
-                                            ${isLoading && html`<div class="absolute inset-0 flex items-center justify-center"><${Icons.Loader} className="w-4 h-4 animate-spin text-white" /></div>`}
-                                            ${isSuccess && html`<div class="absolute inset-0 flex items-center justify-center animate-enter"><${Icons.Check} className="w-5 h-5 text-white" /></div>`}
-                                        </button>
-                                    `;
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                </article>
-            `;
-        };
-
-        // --- MAIN APP ---
-        const App = () => {
-            const [view, setView] = useState('explore'); 
-            const [role, setRole] = useState('client');
-            const [showHeader, setShowHeader] = useState(true);
-            const [showNav, setShowNav] = useState(true);
-            const [isMenuOpen, setIsMenuOpen] = useState(false);
-            const [bookings, setBookings] = useState([
-                { id: 101, salonName: 'Danielle Marie', serviceName: 'Full Balayage', price: 225, time: '2:30 PM', date: 'Tomorrow', status: 'confirmed', location: 'North Hills' },
-                { id: 102, salonName: 'Glow Bar', serviceName: 'Gel Manicure', price: 45, time: '11:00 AM', date: 'Fri, Oct 24', status: 'confirmed', location: 'West End' }
-            ]);
-            const scrollTimeout = useRef(null);
-
-            useEffect(() => {
-                const handleScroll = () => {
-                    const currentScrollY = window.scrollY;
-                    setShowHeader(currentScrollY <= 50);
-                    setShowNav(false);
-                    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-                    scrollTimeout.current = setTimeout(() => setShowNav(true), 350); 
-                };
-                window.addEventListener('scroll', handleScroll, { passive: true });
-                return () => window.removeEventListener('scroll', handleScroll);
-            }, []);
-
-            const toggleRole = () => {
-                setRole(prev => prev === 'client' ? 'business' : 'client');
-                setIsMenuOpen(false);
-            };
-
-            const headerClass = `px-6 pt-16 pb-4 bg-bg/95 backdrop-blur-md sticky top-0 z-30 transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] transform ${showHeader ? 'translate-y-0 opacity-100' : '-translate-y-[120%] opacity-0 pointer-events-none'}`;
-
-            // --- DATA ARRAYS ---
-            const salons = [
-                { id: 'salon_danielle', name: 'Danielle Marie Hair Co.', subtitle: 'Master Stylist • North Hills', image: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=1200', rating: 5.0, featured: true, available: true, services: [{ name: 'Full Balayage', price: 225 }, { name: 'Womens Cut', price: 95 }] },
-                { id: 'salon_1', name: 'Luxe & Co.', subtitle: 'Downtown Studio', image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1200', rating: 4.9, featured: false, available: true, services: [{ name: 'Signature Cut', price: 85 }] },
-                { id: 'salon_2', name: 'Glow Bar', subtitle: 'West End', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=1200', rating: 4.7, featured: false, available: false, services: [{ name: 'Gel Manicure', price: 45 }] }
-            ];
-
-            const topPros = [
-                { id: 1, name: 'Sarah J.', role: 'Lash Artist', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=600', votes: '2.4k' },
-                { id: 2, name: 'Jessica M.', role: 'Colorist', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600', votes: '2.1k' },
-                { id: 3, name: 'Emily R.', role: 'Esthetician', image: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=600', votes: '1.9k' },
-                { id: 4, name: 'Ashley T.', role: 'Stylist', image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=600', votes: '1.8k' },
-                { id: 5, name: 'Olivia K.', role: 'Makeup', image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600', votes: '1.5k' },
-            ];
-
-            const trending = [
-                {name:'HydraFacial',img:'1570172619644-dfd03ed5d881'},{name:'Gel X',img:'1632345031435-8727f6897d53'},{name:'Balayage',img:'1560869713-7d0a29430803'}
-            ];
-
-            // --- RENDER ---
+        <!-- VIEW 1: EXPLORE -->
+        <div id="view-explore" class="view-section active space-y-20">
             
-            if (role === 'business') {
-                return html`
-                    <div class="flex-1 bg-bg p-8 animate-enter pb-40 min-h-screen">
-                        <div class="flex justify-between items-start mb-10 pt-8"><div><p class="text-xs font-bold tracking-widest uppercase text-secondary mb-2">Dashboard</p><h1 class="text-3xl font-serif text-primary">Ryan & Co.</h1></div><button onClick=${toggleRole} class="group flex items-center gap-2 pl-4 pr-2 py-1.5 bg-white border border-accent rounded-full shadow-sm active:scale-95 transition-all duration-300 hover:border-stone-300"><span class="text-[11px] font-bold uppercase tracking-wider text-secondary group-hover:text-primary">Exit Biz</span><div class="h-6 w-6 flex items-center justify-center text-stone-300 group-hover:text-primary transition-colors"><${Icons.ChevronLeft} className="w-4 h-4" /></div></button></div>
-                        <div class="grid grid-cols-2 gap-4 mb-8"><div class="p-6 bg-white rounded-xl shadow-soft border border-white/50"><p class="text-[10px] uppercase tracking-widest text-secondary mb-1">Today's Rev</p><p class="text-3xl font-serif text-primary">$450</p></div><div class="p-6 bg-white rounded-xl shadow-soft border border-white/50"><p class="text-[10px] uppercase tracking-widest text-secondary mb-1">Total Appts</p><p class="text-3xl font-serif text-primary">8</p></div></div>
-                        <div class="bg-white rounded-xl shadow-soft border border-white/50 overflow-hidden min-h-[300px]"><div class="px-6 py-4 border-b border-accent bg-stone-50/50 flex justify-between items-center"><h3 class="font-serif text-primary">Live Activity</h3></div><div class="p-12 text-center text-sm text-stone-400 italic">No recent activity.</div></div>
+            <!-- Salon 1: Danielle Marie -->
+            <article class="group relative flex flex-col gap-4 animate-enter">
+                <div class="relative w-full aspect-[3/4] overflow-hidden rounded-xl bg-stone-200 shadow-soft">
+                    <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=1200" class="absolute inset-0 w-full h-full object-cover" />
+                    <div class="absolute top-4 left-4"><span class="px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold tracking-widest uppercase text-primary rounded-sm shadow-sm">Featured</span></div>
+                    <div class="absolute bottom-4 right-4 flex items-center gap-1 px-2 py-1 bg-stone-900/80 backdrop-blur text-[11px] font-medium text-white rounded-full border border-gold text-gold">
+                        <i data-lucide="star" class="w-3 h-3 fill-gold text-gold"></i> 5.0
                     </div>
-                `;
-            }
+                </div>
+                <div class="px-1 py-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="text-2xl font-serif text-primary leading-tight">Danielle Marie Hair Co.</h3>
+                            <p class="text-base text-secondary font-medium">Master Stylist • North Hills</p>
+                        </div>
+                        <p class="text-base font-serif text-primary mt-1 font-medium">$225</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-accent">
+                        <div class="flex items-center justify-between mb-4"><span class="text-[11px] font-bold tracking-widest uppercase text-secondary">Available Today</span></div>
+                        <div class="flex gap-3">
+                            <!-- Time Button 1 -->
+                            <button onclick="fakeBook(this)" class="btn-booking flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">
+                                <span class="time-text">2:00</span>
+                                <div class="loader"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary"></i></div>
+                                <div class="check"><i data-lucide="check" class="w-5 h-5 text-white"></i></div>
+                            </button>
+                            <!-- Time Button 2 -->
+                            <button onclick="fakeBook(this)" class="btn-booking flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">
+                                <span class="time-text">2:30</span>
+                                <div class="loader"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary"></i></div>
+                                <div class="check"><i data-lucide="check" class="w-5 h-5 text-white"></i></div>
+                            </button>
+                            <!-- Time Button 3 -->
+                            <button onclick="fakeBook(this)" class="btn-booking flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">
+                                <span class="time-text">4:15</span>
+                                <div class="loader"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary"></i></div>
+                                <div class="check"><i data-lucide="check" class="w-5 h-5 text-white"></i></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
 
-            return html`
-                <div class="flex flex-col min-h-screen bg-bg relative selection:bg-stone-200 pb-32">
+            <!-- TRENDING STRIP -->
+            <div class="py-2 animate-enter" style="animation-delay: 0.1s">
+                <div class="flex items-center gap-2 mb-4">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-primary"></i>
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-primary">Trending Now</h3>
+                </div>
+                <div class="flex gap-4 overflow-x-auto -mx-6 px-6 hide-scrollbar pb-2">
+                    <div class="flex-shrink-0 flex flex-col items-center gap-2 w-20">
+                        <div class="h-20 w-20 rounded-full p-1 border border-accent bg-white shadow-sm"><img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=400" class="h-full w-full rounded-full object-cover" /></div>
+                        <span class="text-xs font-medium text-stone-600">HydraFacial</span>
+                    </div>
+                    <div class="flex-shrink-0 flex flex-col items-center gap-2 w-20">
+                        <div class="h-20 w-20 rounded-full p-1 border border-accent bg-white shadow-sm"><img src="https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=400" class="h-full w-full rounded-full object-cover" /></div>
+                        <span class="text-xs font-medium text-stone-600">Gel X</span>
+                    </div>
+                    <div class="flex-shrink-0 flex flex-col items-center gap-2 w-20">
+                        <div class="h-20 w-20 rounded-full p-1 border border-accent bg-white shadow-sm"><img src="https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&q=80&w=400" class="h-full w-full rounded-full object-cover" /></div>
+                        <span class="text-xs font-medium text-stone-600">Balayage</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOP 10 DARK SECTION -->
+            <div class="py-12 -mx-6 my-12 shadow-lg border-y border-stone-800 bg-luxury-dark relative overflow-hidden">
+                <div class="px-6 mb-8 flex justify-between items-end relative z-10">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <div class="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center"><i data-lucide="flame" class="w-3.5 h-3.5 fill-black"></i></div>
+                            <h3 class="font-serif text-2xl text-white italic font-bold">Top 10</h3>
+                        </div>
+                        <p class="text-xs text-stone-400 font-medium tracking-wide">Voted by locals • Updated Today</p>
+                    </div>
+                    <button class="text-xs font-bold text-gold border-b border-gold pb-0.5">View List</button>
+                </div>
+                <div class="flex gap-5 overflow-x-auto px-6 hide-scrollbar snap-x-mandatory pb-6 relative z-10">
+                    <!-- Pro 1 -->
+                    <div class="snap-center shrink-0 w-40 group">
+                        <div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-soft bg-stone-800 mb-3">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=600" class="h-full w-full object-cover grayscale" />
+                            <div class="absolute top-2 left-2 h-7 w-7 bg-black/80 text-white text-xs font-bold flex items-center justify-center rounded-full border border-stone-700">#1</div>
+                            <div class="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white"><i data-lucide="heart" class="w-3 h-3 text-white"></i> 2.4k</div>
+                        </div>
+                        <p class="text-sm font-bold text-white leading-tight">Sarah J.</p>
+                        <p class="text-xs text-stone-400">Lash Artist</p>
+                    </div>
+                     <div class="snap-center shrink-0 w-40 group">
+                        <div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-soft bg-stone-800 mb-3">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600" class="h-full w-full object-cover grayscale" />
+                            <div class="absolute top-2 left-2 h-7 w-7 bg-black/80 text-white text-xs font-bold flex items-center justify-center rounded-full border border-stone-700">#2</div>
+                            <div class="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white"><i data-lucide="heart" class="w-3 h-3 text-white"></i> 2.1k</div>
+                        </div>
+                        <p class="text-sm font-bold text-white leading-tight">Jessica M.</p>
+                        <p class="text-xs text-stone-400">Colorist</p>
+                    </div>
+                     <div class="snap-center shrink-0 w-40 group">
+                        <div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-soft bg-stone-800 mb-3">
+                            <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=600" class="h-full w-full object-cover grayscale" />
+                            <div class="absolute top-2 left-2 h-7 w-7 bg-black/80 text-white text-xs font-bold flex items-center justify-center rounded-full border border-stone-700">#3</div>
+                            <div class="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white"><i data-lucide="heart" class="w-3 h-3 text-white"></i> 1.9k</div>
+                        </div>
+                        <p class="text-sm font-bold text-white leading-tight">Emily R.</p>
+                        <p class="text-xs text-stone-400">Esthetician</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Salon 2 -->
+            <article class="group relative flex flex-col gap-4 animate-enter" style="animation-delay: 0.1s">
+                <div class="relative w-full aspect-[16/9] overflow-hidden rounded-xl bg-stone-200 shadow-soft">
+                    <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1200" class="absolute inset-0 w-full h-full object-cover" />
+                    <div class="absolute top-4 left-4"><span class="px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold tracking-widest uppercase text-primary rounded-sm shadow-sm">Popular</span></div>
+                    <div class="absolute bottom-4 right-4 flex items-center gap-1 px-2 py-1 bg-stone-900/80 backdrop-blur text-[11px] font-medium text-white rounded-full">
+                        <i data-lucide="star" class="w-3 h-3 fill-white text-white"></i> 4.9
+                    </div>
+                </div>
+                <div class="px-1 py-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="text-2xl font-serif text-primary leading-tight">Luxe & Co.</h3>
+                            <p class="text-base text-secondary font-medium">Downtown Studio</p>
+                        </div>
+                        <p class="text-base font-serif text-primary mt-1 font-medium">$85</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-accent">
+                        <div class="flex items-center justify-between mb-4"><span class="text-[11px] font-bold tracking-widest uppercase text-secondary">Available Today</span></div>
+                        <div class="flex gap-3">
+                            <button class="flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">10:00</button>
+                            <button class="flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">11:30</button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+        </div>
+
+        <!-- VIEW 2: BOOKINGS -->
+        <div id="view-bookings" class="view-section px-6">
+            <h2 class="text-2xl font-serif text-primary mb-8 font-medium">My Appointments</h2>
+            <div class="flex gap-6 border-b border-stone-200 mb-8">
+                <button class="pb-3 border-b-2 border-primary text-sm font-bold text-primary">Upcoming</button>
+                <button class="pb-3 border-b-2 border-transparent text-sm font-medium text-stone-400">History</button>
+            </div>
+            
+            <div class="bg-white p-6 rounded-xl shadow-soft border-l-4 border-primary relative overflow-hidden mb-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5 text-secondary"></i>
+                            <span class="text-xs font-bold uppercase tracking-wider text-secondary">Tomorrow • 2:30 PM</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-primary leading-tight">Danielle Marie</h3>
+                        <p class="text-sm text-stone-500 mt-1">Full Balayage</p>
+                    </div>
                     
-                    ${isMenuOpen && html`
-                        <div class="fixed inset-0 z-50 flex flex-col bg-bg/95 backdrop-blur-xl animate-enter">
-                            <div class="flex justify-end p-6">
-                                <button onClick=${() => setIsMenuOpen(false)} class="p-2 rounded-full bg-white shadow-soft"><${Icons.X} className="w-6 h-6 text-primary"/></button>
-                            </div>
-                            <div class="flex-1 flex flex-col justify-center px-10 space-y-8">
-                                <h2 class="text-4xl font-serif text-primary">Menu</h2>
-                                <div class="space-y-4 flex flex-col items-start">
-                                    <button class="text-2xl font-medium text-stone-400">About GlowUp</button>
-                                    <button class="
