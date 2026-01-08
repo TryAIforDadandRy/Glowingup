@@ -1,295 +1,397 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>GlowUp</title>
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>GlowUp</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        serif: ['Playfair Display', 'serif'],
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        bg: '#FAFAF9', 
-                        surface: '#FFFFFF',
-                        primary: '#1A1918',
-                        secondary: '#8C8A85',
-                        accent: '#EBE9E4',
-                        gold: '#D4AF37',
-                    },
-                    boxShadow: {
-                        'soft': '0 4px 40px -10px rgba(0, 0, 0, 0.05)',
-                    },
-                    animation: {
-                        'enter': 'enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        'shimmer': 'shimmer 8s linear infinite',
-                    },
-                    keyframes: {
-                        enter: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        shimmer: {
-                            '0%': { backgroundPosition: '0% 50%' },
-                            '100%': { backgroundPosition: '200% 50%' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- Icons (Lucide) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet" />
 
-    <style>
-        body {
-            overscroll-behavior-y: none;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            background-color: #FAFAF9;
-            color: #1A1918;
-            -webkit-font-smoothing: antialiased;
-            padding-bottom: 140px; /* Space for nav */
-        }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .snap-x-mandatory { scroll-snap-type: x mandatory; }
-        .snap-center { scroll-snap-align: center; }
-        
-        .bg-luxury-dark {
-            background-color: #121212;
-            background-image: radial-gradient(circle at 50% 50%, #1a1a1a 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-        
-        /* View Switching Logic */
-        .view-section { display: none; opacity: 0; transition: opacity 0.4s ease; }
-        .view-section.active { display: block; opacity: 1; }
-        
-        /* Nav Transition */
-        #navbar { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        #navbar.hidden-nav { transform: translateY(200%); }
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ["Playfair Display", "serif"],
+            sans: ["Inter", "sans-serif"],
+          },
+          colors: {
+            bg: "#FAFAF9",
+            surface: "#FFFFFF",
+            primary: "#1A1918",
+            secondary: "#8C8A85",
+            accent: "#EBE9E4",
+            gold: "#D4AF37",
+            brand: "#FF385C",
+          },
+          boxShadow: {
+            soft: "0 4px 40px -10px rgba(0, 0, 0, 0.05)",
+            float: "0 10px 30px -10px rgba(0, 0, 0, 0.08)",
+          },
+          animation: {
+            enter: "enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+          },
+          keyframes: {
+            enter: {
+              "0%": { opacity: "0", transform: "translateY(10px)" },
+              "100%": { opacity: "1", transform: "translateY(0)" },
+            },
+          },
+        },
+      },
+    };
+  </script>
 
-        /* Loader Logic */
-        #loader { transition: opacity 0.5s ease; pointer-events: none;}
-        body.loaded #loader { opacity: 0; }
-        
-        /* Button Interaction Styles */
-        .btn-booking { position: relative; overflow: hidden; }
-        .btn-booking .loader, .btn-booking .check { 
-            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; 
-            opacity: 0; transition: opacity 0.2s; background: white;
-        }
-        .btn-booking.loading .loader { opacity: 1; }
-        .btn-booking.success .check { opacity: 1; background: #059669; color: white; }
-        .btn-booking.loading .time-text, .btn-booking.success .time-text { opacity: 0; }
-    </style>
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* CRITICAL: Set background immediately */
+    html, body { background-color: #1A1918; }
+
+    body {
+      overscroll-behavior-y: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      color: #1A1918;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 120px;
+      transition: background-color 0.8s ease;
+    }
+
+    body.loaded { background-color: #FAFAF9; }
+
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .snap-x-mandatory { scroll-snap-type: x mandatory; }
+    .snap-center { scroll-snap-align: center; }
+
+    .bg-luxury-dark {
+      background-color: #121212;
+      background-image: radial-gradient(circle at 50% 50%, #1a1a1a 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* Stories Ring */
+    .story-ring {
+      background: linear-gradient(45deg, #D4AF37, #1A1918);
+      padding: 2px;
+      border-radius: 50%;
+    }
+    .story-content {
+      background: #FAFAF9;
+      border-radius: 50%;
+      border: 2px solid #FAFAF9;
+    }
+
+    /* View Switching Logic */
+    .view-section { display: none; opacity: 0; transition: opacity 0.3s ease; }
+    .view-section.active { display: block; opacity: 1; }
+
+    /* Nav Transition */
+    #navbar { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    #navbar.hidden-nav { transform: translateY(200%); }
+
+    /* Loader Logic */
+    #loader { transition: opacity 0.8s ease; pointer-events: auto; }
+    body.loaded #loader { opacity: 0; pointer-events: none; }
+
+    /* Button Animations */
+    .btn-booking span { transition: opacity 0.3s; }
+    .btn-booking .loader, .btn-booking .check {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .btn-booking.loading span { opacity: 0; }
+    .btn-booking.loading .loader { opacity: 1; }
+    .btn-booking.success .loader { opacity: 0; }
+    .btn-booking.success .check { opacity: 1; background: #059669; color: white; }
+  </style>
 </head>
-<body class="overflow-x-hidden">
 
-    <!-- LOADER -->
-    <div id="loader" class="fixed inset-0 z-[100] bg-[#FAFAF9] flex flex-col items-center justify-center">
-        <div class="w-10 h-10 border-4 border-accent border-t-primary rounded-full animate-spin"></div>
-        <p class="mt-4 text-xs font-serif text-stone-400 tracking-widest uppercase">Loading...</p>
+<body>
+  <!-- LOADER -->
+  <div id="loader" class="fixed inset-0 z-[100] bg-[#1A1918] flex flex-col items-center justify-center px-10">
+    <div class="text-center w-full max-w-[240px]">
+      <h1 class="text-5xl font-serif italic text-white mb-3 animate-pulse">GlowUp</h1>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header id="main-header" class="fixed top-0 w-full z-40 bg-[#FAFAF9]/95 backdrop-blur-md transition-all duration-500 shadow-sm border-b border-accent/50">
+    <div class="px-5 pt-12 pb-3 flex justify-between items-end">
+      <div class="flex flex-col mb-0.5">
+        <span class="text-[10px] font-bold text-stone-400 uppercase tracking-wide">Current Location</span>
+        <div class="flex items-center gap-1">
+          <span class="text-sm font-bold text-primary">North Hills, Raleigh</span>
+          <i data-lucide="chevron-down" class="w-3 h-3 text-primary"></i>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <span class="font-serif italic text-lg text-primary">GlowUp</span>
+        <button type="button" onclick="toggleMenu()" class="p-2 rounded-full bg-white border border-accent shadow-sm active:scale-95 transition-transform">
+          <i data-lucide="menu" class="w-5 h-5 text-primary"></i>
+        </button>
+      </div>
     </div>
 
-    <!-- HEADER -->
-    <header id="main-header" class="fixed top-0 w-full z-40 px-6 pt-16 pb-4 bg-[#FAFAF9]/95 backdrop-blur-md transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-4xl font-serif italic font-medium tracking-tight text-primary leading-none">GlowUp</h1>
-            <button id="menu-btn" onclick="toggleMenu()" class="p-2 rounded-full bg-white border border-accent shadow-sm active:scale-95 transition-transform">
-                <i data-lucide="menu" class="w-5 h-5 text-primary"></i>
-            </button>
+    <div class="px-5 pb-3">
+      <div class="relative group">
+        <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-stone-400"></i>
+        <input type="text" placeholder="Salon, service, or stylist..."
+          class="w-full bg-white border border-accent rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-black placeholder:text-stone-400 focus:outline-none focus:border-primary transition-colors shadow-sm" />
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="w-full max-w-md mx-auto pt-[160px] px-0">
+
+    <!-- EXPLORE VIEW -->
+    <div id="view-explore" class="view-section active space-y-10">
+
+      <!-- SECTION 1: STORIES (Categories) -->
+      <div class="px-5">
+        <div class="flex gap-4 overflow-x-auto -mx-5 px-5 hide-scrollbar pb-2">
+          <div class="flex flex-col items-center gap-1.5 min-w-[70px] cursor-pointer active:scale-95 transition-transform">
+            <div class="story-ring">
+              <div class="story-content w-[64px] h-[64px] overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&q=80&w=200" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            <span class="text-[11px] font-medium text-primary">Hair</span>
+          </div>
+
+          <div class="flex flex-col items-center gap-1.5 min-w-[70px] cursor-pointer active:scale-95 transition-transform">
+            <div class="story-ring">
+              <div class="story-content w-[64px] h-[64px] overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=200" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            <span class="text-[11px] font-medium text-primary">Skin</span>
+          </div>
+
+          <div class="flex flex-col items-center gap-1.5 min-w-[70px] cursor-pointer active:scale-95 transition-transform">
+            <div class="story-ring">
+              <div class="story-content w-[64px] h-[64px] overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=200" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            <span class="text-[11px] font-medium text-primary">Nails</span>
+          </div>
+
+          <div class="flex flex-col items-center gap-1.5 min-w-[70px] cursor-pointer active:scale-95 transition-transform">
+            <div class="story-ring">
+              <div class="story-content w-[64px] h-[64px] overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1588510904340-b4f0b2401f86?auto=format&fit=crop&q=80&w=200" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            <span class="text-[11px] font-medium text-primary">Brows</span>
+          </div>
+
+          <div class="flex flex-col items-center gap-1.5 min-w-[70px] cursor-pointer active:scale-95 transition-transform">
+            <div class="story-ring">
+              <div class="story-content w-[64px] h-[64px] overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=200" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            <span class="text-[11px] font-medium text-primary">Lashes</span>
+          </div>
         </div>
-        
-        <div id="header-content" class="space-y-6 transition-all duration-500 overflow-hidden" style="max-height: 200px; opacity: 1;">
-            <div class="relative group">
-                <i data-lucide="search" class="absolute left-0 top-3 w-4 h-4 text-stone-300"></i>
-                <input type="text" placeholder="Search artists..." class="w-full bg-transparent border-b border-accent py-2.5 pl-7 pr-4 text-base font-serif text-primary placeholder:font-sans placeholder:text-stone-300 focus:outline-none focus:border-primary transition-colors" />
+      </div>
+
+      <!-- SECTION 2: HERO (The Daily Drop) -->
+      <div class="px-5 animate-enter">
+        <div class="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-soft group">
+          <img src="https://images.unsplash.com/photo-1620331311520-246422fd82f9?auto=format&fit=crop&q=80&w=800" class="absolute inset-0 w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+
+          <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-brand"></span>
+            </span>
+            <span class="text-[10px] font-bold uppercase tracking-wide text-primary">Live Drop</span>
+          </div>
+
+          <div class="absolute bottom-0 left-0 w-full p-6 text-white">
+            <h2 class="text-3xl font-serif italic mb-2">The '90s Blowout</h2>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="bg-white/20 backdrop-blur px-2 py-1 rounded text-xs font-bold">2 Spots Left</span>
+              <span class="text-xs text-stone-300">Tonight at Luxe & Co.</span>
             </div>
-            <div class="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 hide-scrollbar">
-                <button class="px-5 py-2.5 text-[14px] font-medium rounded-full border bg-primary text-white border-primary shadow-soft flex-shrink-0">All</button>
-                <button class="px-5 py-2.5 text-[14px] font-medium rounded-full border bg-transparent text-secondary border-accent flex-shrink-0">Hair</button>
-                <button class="px-5 py-2.5 text-[14px] font-medium rounded-full border bg-transparent text-secondary border-accent flex-shrink-0">Skin</button>
-                <button class="px-5 py-2.5 text-[14px] font-medium rounded-full border bg-transparent text-secondary border-accent flex-shrink-0">Nails</button>
-            </div>
+            <button type="button" class="w-full py-3 bg-white text-black font-bold text-sm rounded-xl active:scale-95 transition-transform">Book Now</button>
+          </div>
         </div>
-    </header>
+      </div>
 
-    <!-- CONTENT CONTAINER -->
-    <main class="w-full max-w-md mx-auto pt-[200px] px-6">
-
-        <!-- VIEW 1: EXPLORE -->
-        <div id="view-explore" class="view-section active space-y-20">
-            
-            <!-- Salon 1: Danielle Marie -->
-            <article class="group relative flex flex-col gap-4 animate-enter">
-                <div class="relative w-full aspect-[3/4] overflow-hidden rounded-xl bg-stone-200 shadow-soft">
-                    <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=1200" class="absolute inset-0 w-full h-full object-cover" />
-                    <div class="absolute top-4 left-4"><span class="px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold tracking-widest uppercase text-primary rounded-sm shadow-sm">Featured</span></div>
-                    <div class="absolute bottom-4 right-4 flex items-center gap-1 px-2 py-1 bg-stone-900/80 backdrop-blur text-[11px] font-medium text-white rounded-full border border-gold text-gold">
-                        <i data-lucide="star" class="w-3 h-3 fill-gold text-gold"></i> 5.0
-                    </div>
-                </div>
-                <div class="px-1 py-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="text-2xl font-serif text-primary leading-tight">Danielle Marie Hair Co.</h3>
-                            <p class="text-base text-secondary font-medium">Master Stylist • North Hills</p>
-                        </div>
-                        <p class="text-base font-serif text-primary mt-1 font-medium">$225</p>
-                    </div>
-                    <div class="mt-6 pt-4 border-t border-accent">
-                        <div class="flex items-center justify-between mb-4"><span class="text-[11px] font-bold tracking-widest uppercase text-secondary">Available Today</span></div>
-                        <div class="flex gap-3">
-                            <!-- Time Button 1 -->
-                            <button onclick="fakeBook(this)" class="btn-booking flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">
-                                <span class="time-text">2:00</span>
-                                <div class="loader"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary"></i></div>
-                                <div class="check"><i data-lucide="check" class="w-5 h-5 text-white"></i></div>
-                            </button>
-                            <!-- Time Button 2 -->
-                            <button onclick="fakeBook(this)" class="btn-booking flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">
-                                <span class="time-text">2:30</span>
-                                <div class="loader"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary"></i></div>
-                                <div class="check"><i data-lucide="check" class="w-5 h-5 text-white"></i></div>
-                            </button>
-                            <!-- Time Button 3 -->
-                            <button onclick="fakeBook(this)" class="btn-booking flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">
-                                <span class="time-text">4:15</span>
-                                <div class="loader"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary"></i></div>
-                                <div class="check"><i data-lucide="check" class="w-5 h-5 text-white"></i></div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </article>
-
-            <!-- TRENDING STRIP -->
-            <div class="py-2 animate-enter" style="animation-delay: 0.1s">
-                <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="trending-up" class="w-4 h-4 text-primary"></i>
-                    <h3 class="text-sm font-bold uppercase tracking-widest text-primary">Trending Now</h3>
-                </div>
-                <div class="flex gap-4 overflow-x-auto -mx-6 px-6 hide-scrollbar pb-2">
-                    <div class="flex-shrink-0 flex flex-col items-center gap-2 w-20">
-                        <div class="h-20 w-20 rounded-full p-1 border border-accent bg-white shadow-sm"><img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=400" class="h-full w-full rounded-full object-cover" /></div>
-                        <span class="text-xs font-medium text-stone-600">HydraFacial</span>
-                    </div>
-                    <div class="flex-shrink-0 flex flex-col items-center gap-2 w-20">
-                        <div class="h-20 w-20 rounded-full p-1 border border-accent bg-white shadow-sm"><img src="https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=400" class="h-full w-full rounded-full object-cover" /></div>
-                        <span class="text-xs font-medium text-stone-600">Gel X</span>
-                    </div>
-                    <div class="flex-shrink-0 flex flex-col items-center gap-2 w-20">
-                        <div class="h-20 w-20 rounded-full p-1 border border-accent bg-white shadow-sm"><img src="https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&q=80&w=400" class="h-full w-full rounded-full object-cover" /></div>
-                        <span class="text-xs font-medium text-stone-600">Balayage</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TOP 10 DARK SECTION -->
-            <div class="py-12 -mx-6 my-12 shadow-lg border-y border-stone-800 bg-luxury-dark relative overflow-hidden">
-                <div class="px-6 mb-8 flex justify-between items-end relative z-10">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <div class="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center"><i data-lucide="flame" class="w-3.5 h-3.5 fill-black"></i></div>
-                            <h3 class="font-serif text-2xl text-white italic font-bold">Top 10</h3>
-                        </div>
-                        <p class="text-xs text-stone-400 font-medium tracking-wide">Voted by locals • Updated Today</p>
-                    </div>
-                    <button class="text-xs font-bold text-gold border-b border-gold pb-0.5">View List</button>
-                </div>
-                <div class="flex gap-5 overflow-x-auto px-6 hide-scrollbar snap-x-mandatory pb-6 relative z-10">
-                    <!-- Pro 1 -->
-                    <div class="snap-center shrink-0 w-40 group">
-                        <div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-soft bg-stone-800 mb-3">
-                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=600" class="h-full w-full object-cover grayscale" />
-                            <div class="absolute top-2 left-2 h-7 w-7 bg-black/80 text-white text-xs font-bold flex items-center justify-center rounded-full border border-stone-700">#1</div>
-                            <div class="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white"><i data-lucide="heart" class="w-3 h-3 text-white"></i> 2.4k</div>
-                        </div>
-                        <p class="text-sm font-bold text-white leading-tight">Sarah J.</p>
-                        <p class="text-xs text-stone-400">Lash Artist</p>
-                    </div>
-                     <div class="snap-center shrink-0 w-40 group">
-                        <div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-soft bg-stone-800 mb-3">
-                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600" class="h-full w-full object-cover grayscale" />
-                            <div class="absolute top-2 left-2 h-7 w-7 bg-black/80 text-white text-xs font-bold flex items-center justify-center rounded-full border border-stone-700">#2</div>
-                            <div class="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white"><i data-lucide="heart" class="w-3 h-3 text-white"></i> 2.1k</div>
-                        </div>
-                        <p class="text-sm font-bold text-white leading-tight">Jessica M.</p>
-                        <p class="text-xs text-stone-400">Colorist</p>
-                    </div>
-                     <div class="snap-center shrink-0 w-40 group">
-                        <div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-soft bg-stone-800 mb-3">
-                            <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=600" class="h-full w-full object-cover grayscale" />
-                            <div class="absolute top-2 left-2 h-7 w-7 bg-black/80 text-white text-xs font-bold flex items-center justify-center rounded-full border border-stone-700">#3</div>
-                            <div class="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white"><i data-lucide="heart" class="w-3 h-3 text-white"></i> 1.9k</div>
-                        </div>
-                        <p class="text-sm font-bold text-white leading-tight">Emily R.</p>
-                        <p class="text-xs text-stone-400">Esthetician</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Salon 2 -->
-            <article class="group relative flex flex-col gap-4 animate-enter" style="animation-delay: 0.1s">
-                <div class="relative w-full aspect-[16/9] overflow-hidden rounded-xl bg-stone-200 shadow-soft">
-                    <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1200" class="absolute inset-0 w-full h-full object-cover" />
-                    <div class="absolute top-4 left-4"><span class="px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold tracking-widest uppercase text-primary rounded-sm shadow-sm">Popular</span></div>
-                    <div class="absolute bottom-4 right-4 flex items-center gap-1 px-2 py-1 bg-stone-900/80 backdrop-blur text-[11px] font-medium text-white rounded-full">
-                        <i data-lucide="star" class="w-3 h-3 fill-white text-white"></i> 4.9
-                    </div>
-                </div>
-                <div class="px-1 py-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="text-2xl font-serif text-primary leading-tight">Luxe & Co.</h3>
-                            <p class="text-base text-secondary font-medium">Downtown Studio</p>
-                        </div>
-                        <p class="text-base font-serif text-primary mt-1 font-medium">$85</p>
-                    </div>
-                    <div class="mt-6 pt-4 border-t border-accent">
-                        <div class="flex items-center justify-between mb-4"><span class="text-[11px] font-bold tracking-widest uppercase text-secondary">Available Today</span></div>
-                        <div class="flex gap-3">
-                            <button class="flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">10:00</button>
-                            <button class="flex-1 py-3 rounded-lg text-sm font-medium border border-accent bg-white text-primary active:scale-95 transition-transform">11:30</button>
-                        </div>
-                    </div>
-                </div>
-            </article>
-
+      <!-- SECTION 3: AVAILABLE TONIGHT -->
+      <div class="px-0">
+        <div class="flex items-center justify-between px-5 mb-3">
+          <h3 class="text-base font-bold text-primary">Free Tonight</h3>
+          <span class="text-xs text-stone-400 font-medium">See All</span>
         </div>
 
-        <!-- VIEW 2: BOOKINGS -->
-        <div id="view-bookings" class="view-section px-6">
-            <h2 class="text-2xl font-serif text-primary mb-8 font-medium">My Appointments</h2>
-            <div class="flex gap-6 border-b border-stone-200 mb-8">
-                <button class="pb-3 border-b-2 border-primary text-sm font-bold text-primary">Upcoming</button>
-                <button class="pb-3 border-b-2 border-transparent text-sm font-medium text-stone-400">History</button>
+        <div class="flex gap-4 overflow-x-auto px-5 hide-scrollbar snap-x-mandatory">
+          <div class="snap-center shrink-0 w-64 p-3 bg-white rounded-xl border border-stone-100 shadow-sm flex gap-3 items-center">
+            <div class="h-16 w-16 rounded-lg bg-stone-200 overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&q=80&w=200" class="h-full w-full object-cover" />
             </div>
-            
-            <div class="bg-white p-6 rounded-xl shadow-soft border-l-4 border-primary relative overflow-hidden mb-6">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <i data-lucide="calendar" class="w-3.5 h-3.5 text-secondary"></i>
-                            <span class="text-xs font-bold uppercase tracking-wider text-secondary">Tomorrow • 2:30 PM</span>
-                        </div>
-                        <h3 class="text-xl font-serif text-primary leading-tight">Danielle Marie</h3>
-                        <p class="text-sm text-stone-500 mt-1">Full Balayage</p>
-                    </div>
-                    
+            <div class="flex-1">
+              <h4 class="text-sm font-bold text-primary truncate">Glow Bar</h4>
+              <p class="text-xs text-stone-500 mb-2">Gel Manicure</p>
+              <div class="flex gap-2">
+                <span class="px-2 py-0.5 bg-stone-100 rounded text-[10px] font-bold text-primary">5:30 PM</span>
+                <span class="px-2 py-0.5 bg-stone-100 rounded text-[10px] font-bold text-primary">6:15 PM</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="snap-center shrink-0 w-64 p-3 bg-white rounded-xl border border-stone-100 shadow-sm flex gap-3 items-center">
+            <div class="h-16 w-16 rounded-lg bg-stone-200 overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=200" class="h-full w-full object-cover" />
+            </div>
+            <div class="flex-1">
+              <h4 class="text-sm font-bold text-primary truncate">Danielle Marie</h4>
+              <p class="text-xs text-stone-500 mb-2">Consultation</p>
+              <div class="flex gap-2">
+                <span class="px-2 py-0.5 bg-stone-100 rounded text-[10px] font-bold text-primary">4:45 PM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: TOP 10 (Editorial) -->
+      <div class="py-10 -mx-4 border-y border-stone-800 bg-[#121212] relative overflow-hidden">
+        <div class="px-9 mb-6 flex justify-between items-end relative z-10">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <div class="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center">
+                <i data-lucide="flame" class="w-3 h-3 fill-black"></i>
+              </div>
+              <h3 class="font-serif text-xl text-white italic font-bold">Top 10</h3>
+            </div>
+            <p class="text-[10px] text-stone-400 font-medium tracking-wide">Voted by locals • Updated Today</p>
+          </div>
+          <button type="button" class="text-xs font-bold text-gold border-b border-gold pb-0.5">View List</button>
+        </div>
+
+        <div class="flex gap-4 overflow-x-auto px-9 hide-scrollbar snap-x-mandatory pb-2 relative z-10">
+          <div class="snap-center shrink-0 w-28 group">
+            <div class="relative w-full aspect-[4/5] rounded-lg overflow-hidden bg-stone-800 mb-2">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400" class="h-full w-full object-cover grayscale" />
+              <div class="absolute top-2 left-2 h-6 w-6 bg-white text-black text-[10px] font-bold flex items-center justify-center rounded-full">1</div>
+            </div>
+            <p class="text-xs font-bold text-white leading-tight">Sarah J.</p>
+            <p class="text-[10px] text-stone-400">Lash Artist</p>
+          </div>
+
+          <div class="snap-center shrink-0 w-28 group">
+            <div class="relative w-full aspect-[4/5] rounded-lg overflow-hidden bg-stone-800 mb-2">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400" class="h-full w-full object-cover grayscale" />
+              <div class="absolute top-2 left-2 h-6 w-6 bg-stone-800 text-white border border-stone-600 text-[10px] font-bold flex items-center justify-center rounded-full">2</div>
+            </div>
+            <p class="text-xs font-bold text-white leading-tight">Jessica M.</p>
+            <p class="text-[10px] text-stone-500">Colorist</p>
+          </div>
+
+          <div class="snap-center shrink-0 w-28 group">
+            <div class="relative w-full aspect-[4/5] rounded-lg overflow-hidden bg-stone-800 mb-2">
+              <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=400" class="h-full w-full object-cover grayscale" />
+              <div class="absolute top-2 left-2 h-6 w-6 bg-stone-800 text-white border border-stone-600 text-[10px] font-bold flex items-center justify-center rounded-full">3</div>
+            </div>
+            <p class="text-xs font-bold text-white leading-tight">Emily R.</p>
+            <p class="text-[10px] text-stone-400">Esthetician</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 5: SALON FEED -->
+      <div class="px-5 space-y-8 pb-8">
+        <article class="group relative flex flex-col gap-3">
+          <div class="relative w-full aspect-video overflow-hidden rounded-xl bg-stone-200 shadow-soft">
+            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1200" class="absolute inset-0 w-full h-full object-cover" />
+            <div class="absolute top-3 left-3">
+              <span class="px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold tracking-widest uppercase text-primary rounded-sm shadow-sm">Popular</span>
+            </div>
+            <div class="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-stone-900/80 backdrop-blur text-[11px] font-medium text-white rounded-full">
+              <i data-lucide="star" class="w-3 h-3 fill-white text-white"></i> 4.9
+            </div>
+          </div>
+          <div class="px-1">
+            <div class="flex justify-between items-start mb-1">
+              <h3 class="text-xl font-serif text-primary leading-tight">Luxe & Co.</h3>
+              <span class="text-sm text-secondary font-medium mt-0.5">Downtown Studio</span>
+            </div>
+            <p class="text-xs text-stone-500 mb-3">0.8 mi • Cuts, Color, Styling</p>
+            <div class="flex gap-2">
+              <button type="button" class="btn-booking flex-1 py-2.5 rounded-lg text-xs font-bold border border-accent bg-white text-primary shadow-sm">10:00</button>
+              <button type="button" class="btn-booking flex-1 py-2.5 rounded-lg text-xs font-bold border border-accent bg-white text-primary shadow-sm">11:30</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="group relative flex flex-col gap-3">
+          <div class="relative w-full aspect-video overflow-hidden rounded-xl bg-stone-200 shadow-soft">
+            <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=1200" class="absolute inset-0 w-full h-full object-cover" />
+            <div class="absolute top-3 left-3">
+              <span class="px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold tracking-widest uppercase text-primary rounded-sm shadow-sm">Featured</span>
+            </div>
+            <div class="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-stone-900/80 backdrop-blur text-[11px] font-medium text-white rounded-full border border-gold text-gold">
+              <i data-lucide="star" class="w-3 h-3 fill-gold text-gold"></i> 5.0
+            </div>
+          </div>
+          <div class="px-1">
+            <div class="flex justify-between items-start mb-1">
+              <h3 class="text-xl font-serif text-primary leading-tight">Danielle Marie Hair Co.</h3>
+              <span class="text-sm text-secondary font-medium mt-0.5">Master Stylist • North Hills</span>
+            </div>
+            <p class="text-xs text-stone-500 mb-3">1.2 mi • Balayage Specialist</p>
+            <div class="flex gap-2">
+              <button type="button" class="btn-booking flex-1 py-2.5 rounded-lg text-xs font-bold border border-accent bg-white text-primary shadow-sm">2:00</button>
+              <button type="button" class="btn-booking flex-1 py-2.5 rounded-lg text-xs font-bold border border-accent bg-white text-primary shadow-sm">3:30</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Minimal JS needed so it actually "renders" (your loader was blocking everything forever) -->
+  <script>
+    // 1) Icons
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
+
+    // 2) Loader -> allow the page to be visible
+    function markLoaded() {
+      document.body.classList.add("loaded");
+    }
+    if (document.readyState === "complete") {
+      markLoaded();
+    } else {
+      window.addEventListener("load", markLoaded, { once: true });
+      // fallback in case "load" never fires due to some external resource hang
+      setTimeout(markLoaded, 1500);
+    }
+
+    // 3) Your header menu button calls this; without it you get console errors.
+    function toggleMenu() {
+      // Replace this with a real drawer later; for now: no-op that doesn't crash.
+      console.log("toggleMenu()");
+    }
+    window.toggleMenu = toggleMenu;
+  </script>
+</body>
+</html>
